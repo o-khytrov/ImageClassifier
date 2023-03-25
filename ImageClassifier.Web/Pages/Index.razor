@@ -4,6 +4,8 @@
 @using SixLabors.ImageSharp.Formats.Png
 @using SixLabors.Fonts
 @using System.Diagnostics
+@using SixLabors.ImageSharp.Drawing.Processing
+@using SixLabors.ImageSharp.Processing
 @inject IJSRuntime JsRuntime
 <div class="slidecontainer">
     <label for="delta">Frame size @FrameSize</label>
@@ -130,7 +132,7 @@
         if (BaseImage is not null)
         {
             var predictions = Classifier.ClassifyImage(BaseImage);
-    /*
+
             Console.WriteLine("Predictions made");
 
             Image image = BaseImage.Clone();
@@ -142,10 +144,9 @@
                         new PointF(prediction.X + FrameSize / 2, prediction.Y + FrameSize / 2)));
                 }
             }
-            
+
             ResultBase64 = image.ToBase64String(PngFormat.Instance);
             StateHasChanged();
-              */
         }
     }
 
