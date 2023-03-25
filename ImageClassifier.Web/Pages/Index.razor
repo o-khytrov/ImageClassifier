@@ -1,0 +1,48 @@
+﻿@page "/"
+@using SixLabors.ImageSharp.PixelFormats
+@using SixLabors.ImageSharp
+@using SixLabors.ImageSharp.Formats.Png
+@inject IJSRuntime JSRuntime
+<div class="slidecontainer">
+    <label for="delta">Frame size @FrameSize</label>
+    <input type="range" step="25" min="25" max="100" class="slider" id="frameSize" @bind="@FrameSize">
+</div>
+<input class="mb-2" type="file" id="addMap" onchange="addMap(this)">
+<div>
+    @foreach (var rc in RecognitionClasses)
+    {
+        <div>
+            Recognition class
+            <img src="@rc.DataUrl" style="width:@(FrameSize * 2)px; height:@(FrameSize * 2)px"/>
+        </div>
+    }
+</div>
+<div id="map_container">
+    <canvas id="source"></canvas>
+</div>
+
+
+@code{
+
+    public int FrameSize { get; set; } = 50;
+
+    public List<RecognitionClass> RecognitionClasses { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        JsService.ImageSelected += AddRecognitionClass;
+    }
+
+    private void AddRecognitionClass(ImageData imageData)
+    {
+        var recognitionClass = new RecognitionClass(imageData, "my class");
+        using (var image = Image.LoadPixelData<Rgba32>(imageData.Data, imageData.Width, imageData.Height))
+        {
+            recognitionClass.DataUrl = image.ToBase64String(PngFormat.Instance);
+        }
+
+        RecognitionClasses.Add(recognitionClass);
+        StateHasChanged();
+    }
+
+}
