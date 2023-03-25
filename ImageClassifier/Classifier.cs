@@ -6,32 +6,31 @@ namespace ImageClassifier;
 
 public class Classifier
 {
-    private static String RESULT_NAME_TEMPLATE = "";
-    private static string RESULT_DATE_FORMAT = "ddMMyy_HHmm";
+    private const string ResultDateFormat = "ddMMyy_HHmm";
 
-    public static List<FramePrediction> Launch(String imageName, List<String> classesImagesNames, List<Color> colors,
+    public static List<FramePrediction> Launch(string imageName, List<string> classesImagesNames, List<Color> colors,
         int areaSize)
     {
         /* Отримуємо значення кольорів пікселів для зображень кожного класу */
         var classesValues = GetClassesValues(classesImagesNames);
 
         /* Знаходимо оптимальне значення дельти для СКД */
-        var delta = getOptimalDelta(classesValues);
+        var delta = GetOptimalDelta(classesValues);
 
         /* Переводимо значення у бінарний вигляд та знаходимо еталонні вектори кожного класу */
         var classBinaryMatrices = new List<int[][]>();
         var classVectors = new int[classesValues.Count()][];
 
-        var limitVector = getLimitVector(classesValues[0]);
+        var limitVector = GetLimitVector(classesValues[0]);
         for (var i = 0; i < classesValues.Count(); i++)
         {
-            var classBinaryMatrix = getBinaryMatrix(classesValues[i], limitVector, delta);
+            var classBinaryMatrix = GetBinaryMatrix(classesValues[i], limitVector, delta);
             classBinaryMatrices.Add(classBinaryMatrix);
             classVectors[i] = getVectorFromBinaryMatrix(classBinaryMatrix);
         }
 
         /* Знаходимо радіуси контейнера кожного класу */
-        var radii = getRadii(classVectors, classBinaryMatrices);
+        var radii = GetRadii(classVectors, classBinaryMatrices);
         Console.WriteLine("Optimal radii: " + radii);
 
         /* Класифікуємо зображення (екзамен) */
@@ -46,7 +45,7 @@ public class Classifier
      * @param delta       значення дельти для СКД
      * @return бінарну матрицю зображення
      */
-    private static int[][] getBinaryMatrix(int[][] values, List<Double> limitVector, int delta)
+    private static int[][] GetBinaryMatrix(int[][] values, List<double> limitVector, int delta)
     {
         var binaryMatrix = new int[values.Length][];
         for (var i = 0; i < values.Length; i++)
@@ -75,7 +74,7 @@ public class Classifier
      * @param values значення кольорів базового класу
      * @return вектор, який задає СКД
      */
-    private static List<Double> getLimitVector(int[][] values)
+    private static List<double> GetLimitVector(int[][] values)
     {
         var limitVector = new List<double>();
         for (var i = 0; i < values[0].Length; i++)
@@ -108,7 +107,7 @@ public class Classifier
         List<Color> colors,
         int areaSize,
         int delta,
-        List<Double> limitVector,
+        List<double> limitVector,
         int[][] classVectors,
         List<int> radii)
     {
@@ -128,13 +127,13 @@ public class Classifier
                     //BufferedImage crop = image.getSubimage(i, j, areaSize, areaSize);
                     var crop = image.Clone(x => x.Crop(new Rectangle(i, j, areaSize, areaSize))).CloneAs<Rgba32>();
                     var cropValues = ImgToArray(crop);
-                    var cropBinaryMatrix = getBinaryMatrix(cropValues, limitVector, delta);
+                    var cropBinaryMatrix = GetBinaryMatrix(cropValues, limitVector, delta);
                     var classNumber = -1;
                     double classValue = 0;
                     /* Проводимо екзамен області відносно кожного класу */
                     for (var k = 0; k < classVectors.Length; k++)
                     {
-                        var res = exam(classVectors[k], radii[k], cropBinaryMatrix);
+                        var res = Exam(classVectors[k], radii[k], cropBinaryMatrix);
                         /* Якщо значення після екзамену більше за поточне значення, то відносимо область до цього класу */
                         if (res > classValue)
                         {
@@ -161,12 +160,12 @@ public class Classifier
         }
 
         /* Зберігаємо зображення після класифікації */
-        image.Save(File.OpenWrite($"result_{imageName}_{DateTime.Now.ToString(RESULT_DATE_FORMAT)}.png"),
+        image.Save(File.OpenWrite($"result_{imageName}_{DateTime.Now.ToString(ResultDateFormat)}.png"),
             new PngEncoder()); //Replace Png encoder with the file format of choice
         return result;
     }
 
-    private static int getOptimalDelta(List<int[][]> classesValues)
+    private static int GetOptimalDelta(IReadOnlyList<int[][]> classesValues)
     {
         var optimalDelta = 0;
         double optimalDeltaCriterionValue = 0;
@@ -178,17 +177,17 @@ public class Classifier
             /* Розраховуємо вектор, який задає СКД, бінарні матриці та еталонні вектори кожного класу */
             var classBinaryMatrices = new List<int[][]>();
             var classVectors = new int[classesValues.Count][];
-            var limitVector = getLimitVector(classesValues[0]);
+            var limitVector = GetLimitVector(classesValues[0]);
             for (var i = 0; i < classesValues.Count; i++)
             {
-                var classBinaryMatrix = getBinaryMatrix(classesValues[i], limitVector, delta);
+                var classBinaryMatrix = GetBinaryMatrix(classesValues[i], limitVector, delta);
                 classBinaryMatrices.Add(classBinaryMatrix);
                 classVectors[i] = GetVectorFromBinaryMatrix(classBinaryMatrix);
             }
 
             /* Шукаємо сусідів класів */
-            var pairs = makePairs(classVectors);
-            List<List<Tuple<Double, Boolean>>> criterionValues = new List<List<Tuple<Double, Boolean>>>();
+            var pairs = MakePairs(classVectors);
+            var criterionValues = new List<List<Tuple<double, bool>>>();
             /* Для кожного класу знаходимо значення критеріїв */
             /*
             IntStream.range(0, classVectors.Length).forEach(
@@ -198,13 +197,13 @@ public class Classifier
             */
             foreach (var t in classVectors)
             {
-                criterionValues.AddRange(getCriterionValuesForClassesAndRadii(classVectors, classBinaryMatrices, pairs));
+                criterionValues.AddRange(GetCriterionValuesForClassesAndRadii(classVectors, classBinaryMatrices, pairs));
             }
 
             /* Обчислюємо середнє значення критерію та середнє значення критерію у робочій області */
             var sum = new List<double>();
             var sumWorkingArea = new List<double>();
-            foreach (List<Tuple<double, bool>> criterionValue in criterionValues)
+            foreach (var criterionValue in criterionValues)
             {
                 sum.Add(criterionValue.Select(x => x.Item1).Max());
                 sumWorkingArea.Add(criterionValue.Select(pair => pair.Item2 ? pair.Item1 : -10).Max());
@@ -237,16 +236,16 @@ public class Classifier
      * @param pairs               сусідні класи
      * @return значення критерію для класів та радіусів їх контейнера
      */
-    private static List<List<Tuple<Double, Boolean>>> getCriterionValuesForClassesAndRadii(int[][] classVectors,
-        List<int[][]> classBinaryMatrices, int[][] pairs)
+    private static List<List<Tuple<double, bool>>> GetCriterionValuesForClassesAndRadii(IReadOnlyList<int[]> classVectors,
+        IReadOnlyList<int[][]> classBinaryMatrices, IReadOnlyList<int[]> pairs)
     {
-        var criterionValues = new List<List<Tuple<Double, Boolean>>>();
+        var criterionValues = new List<List<Tuple<double, bool>>>();
         foreach (var classVector in classVectors)
         {
             criterionValues.Add(new List<Tuple<double, bool>>());
         }
 
-        for (var classNumber = 0; classNumber < classVectors.Length; classNumber++)
+        for (var classNumber = 0; classNumber < classVectors.Count; classNumber++)
         {
             /* Обчислюємо значення критерію для радіусів у інтервалі [0, 60] */
             for (var radius = 0; radius < 61; radius++)
@@ -263,7 +262,7 @@ public class Classifier
                     .Select(i => i <= radius ? 1 : 0)
                     .Average();
                 /* Обчислюємо значення критерію*/
-                var criterionValue = calculateCriterion(alpha, beta);
+                var criterionValue = CalculateCriterion(alpha, beta);
                 /* Якщо перша достовірність >= 0.5, а помилка другого роду < 0.5, то це значення знаходиться у робочій області */
                 var isWorkingArea = (d1 >= 0.5 && beta < 0.5);
                 criterionValues[classNumber].Add(new Tuple<double, bool>(criterionValue, isWorkingArea));
@@ -287,7 +286,7 @@ public class Classifier
         var distances = new List<int>();
         foreach (var binaryMatrixVector in binaryMatrix)
         {
-            distances.Add(getDistanceBetweenVectors(vector, binaryMatrixVector));
+            distances.Add(GetDistanceBetweenVectors(vector, binaryMatrixVector));
         }
 
         return distances;
@@ -353,7 +352,7 @@ public class Classifier
      * @param classVectors еталонні вектори кожного класу
      * @return сусідів кожного класу
      */
-    private static int[][] makePairs(int[][] classVectors)
+    private static int[][] MakePairs(int[][] classVectors)
     {
         //int[][] pairs = new int[classVectors.Length][2];
         var pairs = new int[classVectors.Length][];
@@ -370,7 +369,7 @@ public class Classifier
             {
                 if (i != j)
                 {
-                    var distance = getDistanceBetweenVectors(classVectors[i], classVectors[j]);
+                    var distance = GetDistanceBetweenVectors(classVectors[i], classVectors[j]);
                     if (distance < pairs[i][1])
                     {
                         pairs[i][0] = j;
@@ -390,7 +389,7 @@ public class Classifier
      * @param secondVector другий вектор
      * @return відстань між двома векторами
      */
-    private static int getDistanceBetweenVectors(int[] firstVector, int[] secondVector)
+    private static int GetDistanceBetweenVectors(int[] firstVector, int[] secondVector)
     {
         var distance = 0;
         for (var i = 0; i < firstVector.Length; i++)
@@ -434,13 +433,13 @@ public class Classifier
      * @param classBinaryMatrices бінарні матриці класів
      * @return список радіусів контейнерів усіх класів
      */
-    private static List<int> getRadii(int[][] classVectors, List<int[][]> classBinaryMatrices)
+    private static List<int> GetRadii(int[][] classVectors, List<int[][]> classBinaryMatrices)
     {
         /* Знаходимо сусідні класи */
-        var pairs = makePairs(classVectors);
+        var pairs = MakePairs(classVectors);
         /* Знаходимо значення критерію для можливих значень радіусів */
-        var criterionValues = new List<List<Tuple<Double, Boolean>>>();
-        criterionValues.AddRange(getCriterionValuesForClassesAndRadii(classVectors, classBinaryMatrices, pairs));
+        var criterionValues = new List<List<Tuple<double, bool>>>();
+        criterionValues.AddRange(GetCriterionValuesForClassesAndRadii(classVectors, classBinaryMatrices, pairs));
         /* Знаходимо оптимальні радіуси */
         var radii = new List<int>();
         Console.WriteLine("Calculation of radii for classes");
@@ -477,12 +476,12 @@ public class Classifier
      * @param binaryMatrix бінарна матриця зображення, для якого відбувається пошук класу
      * @return результат екзамену
      */
-    private static double exam(int[] classVector, int radius, int[][] binaryMatrix)
+    private static double Exam(int[] classVector, int radius, int[][] binaryMatrix)
     {
         double sum = 0;
         foreach (var aBinaryMatrix in binaryMatrix)
         {
-            sum += 1 - (double) getDistanceBetweenVectors(classVector, aBinaryMatrix) / radius;
+            sum += 1 - (double) GetDistanceBetweenVectors(classVector, aBinaryMatrix) / radius;
         }
 
         return sum / binaryMatrix.Length;
@@ -495,9 +494,9 @@ public class Classifier
      * @param beta  помилка другого роду
      * @return значення критерію
      */
-    private static double calculateCriterion(double alpha, double beta)
+    private static double CalculateCriterion(double alpha, double beta)
     {
-        return calculateKullback(alpha, beta) / calculateKullback(0, 0);
+        return CalculateKullback(alpha, beta) / CalculateKullback(0, 0);
     }
 
     /**
@@ -507,7 +506,7 @@ public class Classifier
      * @param beta  помилка другого роду
      * @return значення критерію Кульбака
      */
-    private static double calculateKullback(double alpha, double beta)
+    private static double CalculateKullback(double alpha, double beta)
     {
         return (Math.Log((2 - (alpha + beta) + 0.1) / (alpha + beta + 0.1)) / Math.Log(2)) * (1 - (alpha + beta));
     }
