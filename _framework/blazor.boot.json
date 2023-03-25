@@ -8,7 +8,7 @@
   "resources": {
     "assembly": {
       "ImageClassifier.dll": "sha256-EfxfYBPjdA1cxj3DH+DbKmE74tH3CwfT9cuiaaNkw2M=",
-      "ImageClassifier.Web.dll": "sha256-slTeRLh6CbakADX+qTgnemcx4OuVS+jExeFHcToZOpg=",
+      "ImageClassifier.Web.dll": "sha256-U8ARNCpZuDvZvHCMW8fQaAIn1KaxMYj0c7gSI7XF7HY=",
       "Microsoft.AspNetCore.Components.dll": "sha256-ADIdf1Kh0Z03H5ALp69sY9vPNi+2ahk16KJ8aeNOj9M=",
       "Microsoft.AspNetCore.Components.Web.dll": "sha256-NbNId\/mbBhMlMOBCCM9ngwvsRmrTvAznmcq\/o+GFBLg=",
       "Microsoft.AspNetCore.Components.WebAssembly.dll": "sha256-UmBNW046bLlFYUgZluaE8q251xpHaH5g6ibFCEH7nQI=",
