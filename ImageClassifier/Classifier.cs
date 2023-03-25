@@ -4,7 +4,7 @@ using SixLabors.ImageSharp.Formats.Png;
 
 namespace ImageClassifier;
 
-public static class Classifier
+public class Classifier
 {
     private static String RESULT_NAME_TEMPLATE = "";
     private static string RESULT_DATE_FORMAT = "ddMMyy_HHmm";
@@ -25,7 +25,7 @@ public static class Classifier
         var limitVector = getLimitVector(classesValues[0]);
         for (var i = 0; i < classesValues.Count(); i++)
         {
-            int[][] classBinaryMatrix = getBinaryMatrix(classesValues[i], limitVector, delta);
+            var classBinaryMatrix = getBinaryMatrix(classesValues[i], limitVector, delta);
             classBinaryMatrices.Add(classBinaryMatrix);
             classVectors[i] = getVectorFromBinaryMatrix(classBinaryMatrix);
         }
@@ -127,8 +127,8 @@ public static class Classifier
                     /* Вирізаємо квадратну область, перетворюємо її у бінарну матрицю та проводимо екзамен */
                     //BufferedImage crop = image.getSubimage(i, j, areaSize, areaSize);
                     var crop = image.Clone(x => x.Crop(new Rectangle(i, j, areaSize, areaSize))).CloneAs<Rgba32>();
-                    int[][] cropValues = ImgToArray(crop);
-                    int[][] cropBinaryMatrix = getBinaryMatrix(cropValues, limitVector, delta);
+                    var cropValues = ImgToArray(crop);
+                    var cropBinaryMatrix = getBinaryMatrix(cropValues, limitVector, delta);
                     var classNumber = -1;
                     double classValue = 0;
                     /* Проводимо екзамен області відносно кожного класу */
@@ -176,18 +176,18 @@ public static class Classifier
         for (var delta = 1; delta <= 120; delta++)
         {
             /* Розраховуємо вектор, який задає СКД, бінарні матриці та еталонні вектори кожного класу */
-            List<int[][]> classBinaryMatrices = new List<int[][]>();
-            int[][] classVectors = new int[classesValues.Count][];
+            var classBinaryMatrices = new List<int[][]>();
+            var classVectors = new int[classesValues.Count][];
             var limitVector = getLimitVector(classesValues[0]);
             for (var i = 0; i < classesValues.Count; i++)
             {
-                int[][] classBinaryMatrix = getBinaryMatrix(classesValues[i], limitVector, delta);
+                var classBinaryMatrix = getBinaryMatrix(classesValues[i], limitVector, delta);
                 classBinaryMatrices.Add(classBinaryMatrix);
                 classVectors[i] = GetVectorFromBinaryMatrix(classBinaryMatrix);
             }
 
             /* Шукаємо сусідів класів */
-            int[][] pairs = makePairs(classVectors);
+            var pairs = makePairs(classVectors);
             List<List<Tuple<Double, Boolean>>> criterionValues = new List<List<Tuple<Double, Boolean>>>();
             /* Для кожного класу знаходимо значення критеріїв */
             /*
