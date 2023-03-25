@@ -105,10 +105,10 @@
        
         var brushes = new List<IBrush>
         {
-            Brushes.Solid(Color.Blue.WithAlpha(0.5f)),
-            Brushes.Solid(Color.Orange.WithAlpha(0.5f)),
-            Brushes.Solid(Color.Red.WithAlpha(0.5f)),
-            Brushes.Solid(Color.Black.WithAlpha(0.5f)),
+            Brushes.Solid(Color.Blue.WithAlpha(0.35f)),
+            Brushes.Solid(Color.Orange.WithAlpha(0.35f)),
+            Brushes.Solid(Color.Red.WithAlpha(0.35f)),
+            Brushes.Solid(Color.Black.WithAlpha(0.35f)),
         };
 
         Classifier.Setup(RecognitionClasses.Select(x => x.Image).ToList(), FrameSize);
@@ -124,6 +124,7 @@
             Image image = BaseImage.Clone();
             foreach (var prediction in predictions)
             {
+                StateHasChanged();  
                 if (prediction.Class > -1)
                 {
                     var yourPolygon = new Rectangle(prediction.X, prediction.Y, FrameSize, FrameSize);

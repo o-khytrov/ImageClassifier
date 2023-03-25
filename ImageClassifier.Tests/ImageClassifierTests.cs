@@ -67,12 +67,23 @@ public class ImageClassifierTests
     private void AddPredictionsToImage(List<FramePrediction> predictions, Image image, List<Color> colors, int areaSize,
         string imageName)
     {
+        var brushes = new List<IBrush>
+        {
+            Brushes.Solid(Color.Blue.WithAlpha(0.1f)),
+            Brushes.Solid(Color.Orange.WithAlpha(0.1f)),
+            Brushes.Solid(Color.Red.WithAlpha(0.1f)),
+            Brushes.Solid(Color.Black.WithAlpha(0.1f)),
+        };
+        
         foreach (var prediction in predictions)
         {
             if (prediction.Class > -1)
             {
                 image.Mutate(x => x.DrawText(prediction.Class.ToString(), _font, colors[prediction.Class],
                     new PointF(prediction.X + areaSize / 2, prediction.Y + areaSize / 2)));
+                
+                //var yourPolygon = new Rectangle(prediction.X, prediction.Y, areaSize, areaSize);
+                //image.Mutate(x => x.Fill(brushes[prediction.Class], yourPolygon));  
             }
         }
 
