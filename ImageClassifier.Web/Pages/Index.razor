@@ -1,11 +1,9 @@
 ﻿@page "/"
 @using SixLabors.ImageSharp.PixelFormats
 @using SixLabors.ImageSharp
-@using SixLabors.ImageSharp.Drawing.Processing
 @using SixLabors.ImageSharp.Formats.Png
-@using SixLabors.ImageSharp.Processing
 @using SixLabors.Fonts
-@using System.Reflection
+@using System.Diagnostics
 @inject IJSRuntime JsRuntime
 <div class="slidecontainer">
     <label for="delta">Frame size @FrameSize</label>
@@ -14,6 +12,7 @@
 <input class="mb-2" type="file" id="addMap" onchange="addMap(this)">
 <div>
     <button class="btn btn-primary" @onclick="Classify">Classify</button>
+    <button class="btn btn-primary" @onclick="LogTask">LogTask</button>
     <table>
         <thead>
         <tr>
@@ -64,7 +63,6 @@
 
     protected override void OnInitialized()
     {
-        
     //var resourceName = $"{Assembly.GetExecutingAssembly().GetName().Name}.Fonts.OpenSans-Regular.ttf";
     //var fontStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName);
     //var family = collection.Add(fontStream);
@@ -99,6 +97,25 @@
         RecognitionClasses.Remove(recognitionClass);
     }
 
+    void Fibonacci_Iterative(long len)
+    {
+        int a = 0, b = 1, c = 0;
+        for (long i = 2; i < len; i++)
+        {
+            c = a + b;
+
+            a = b;
+            b = c;
+        }
+    }
+
+    public void LogTask()
+    {
+        var sw = Stopwatch.StartNew();
+        Fibonacci_Iterative(9999999999);
+        Console.WriteLine(sw.Elapsed);
+    }
+
     private void Classify()
     {
         var colors = new List<Color>
@@ -107,11 +124,13 @@
         };
 
         Classifier.Setup(RecognitionClasses.Select(x => x.Image).ToList(), FrameSize);
+
         Console.WriteLine("setup completed");
-    /*
+
         if (BaseImage is not null)
         {
             var predictions = Classifier.ClassifyImage(BaseImage);
+    /*
             Console.WriteLine("Predictions made");
 
             Image image = BaseImage.Clone();
@@ -126,8 +145,8 @@
             
             ResultBase64 = image.ToBase64String(PngFormat.Instance);
             StateHasChanged();
+              */
         }
-        */
     }
 
 }
