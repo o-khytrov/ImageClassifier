@@ -1,24 +1,21 @@
-namespace ImageClassifier;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+
+namespace ImageClassifier.Web;
 
 /// <summary>
 /// Клас розпізнавання
 /// </summary>
 public class RecognitionClass
 {
-    public byte[] Data { get; set; }
-
-    public int Width { get; set; }
-
-    public int Height { get; set; }
+    public Image<Rgba32> Image { get; }
 
     public string? DataUrl { get; set; }
 
-    public RecognitionClass(ImageData imageData, string name = null)
+    public RecognitionClass(Image<Rgba32> image, string name = null)
     {
         Name = name;
-        Data = imageData.Data;
-        Width = imageData.Width;
-        Height = imageData.Height;
+        Image = image;
     }
 
     /// <summary>

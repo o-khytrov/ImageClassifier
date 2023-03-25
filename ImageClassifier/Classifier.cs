@@ -1,40 +1,40 @@
-﻿using SixLabors.Fonts;
-using SixLabors.ImageSharp.Drawing.Processing;
-using SixLabors.ImageSharp.Formats.Png;
-
-namespace ImageClassifier;
+﻿namespace ImageClassifier;
 
 public class Classifier
 {
-    private const string ResultDateFormat = "ddMMyy_HHmm";
+    private static int _delta;
+    private static List<int[][]> _classesValues;
+    private static int _areaSize;
+    private static List<double> _limitVector;
+    private static List<int> _radii;
+    private static int[][] _classVectors;
 
-    public static List<FramePrediction> Launch(string imageName, List<string> classesImagesNames, List<Color> colors,
-        int areaSize)
+
+    public static void Setup(List<Image<Rgba32>> classesImages, int areaSize)
     {
+        _areaSize = areaSize;
         /* Отримуємо значення кольорів пікселів для зображень кожного класу */
-        var classesValues = GetClassesValues(classesImagesNames);
+        _classesValues = GetClassesValues(classesImages);
+        _limitVector = GetLimitVector(_classesValues[0]);
 
         /* Знаходимо оптимальне значення дельти для СКД */
-        var delta = GetOptimalDelta(classesValues);
+        _delta = GetOptimalDelta(_classesValues);
 
         /* Переводимо значення у бінарний вигляд та знаходимо еталонні вектори кожного класу */
         var classBinaryMatrices = new List<int[][]>();
-        var classVectors = new int[classesValues.Count()][];
+        _classVectors = new int[_classesValues.Count][];
 
-        var limitVector = GetLimitVector(classesValues[0]);
-        for (var i = 0; i < classesValues.Count(); i++)
+
+        for (var i = 0; i < _classesValues.Count(); i++)
         {
-            var classBinaryMatrix = GetBinaryMatrix(classesValues[i], limitVector, delta);
+            var classBinaryMatrix = GetBinaryMatrix(_classesValues[i], _limitVector, _delta);
             classBinaryMatrices.Add(classBinaryMatrix);
-            classVectors[i] = getVectorFromBinaryMatrix(classBinaryMatrix);
+            _classVectors[i] = getVectorFromBinaryMatrix(classBinaryMatrix);
         }
 
         /* Знаходимо радіуси контейнера кожного класу */
-        var radii = GetRadii(classVectors, classBinaryMatrices);
-        Console.WriteLine("Optimal radii: " + radii);
-
-        /* Класифікуємо зображення (екзамен) */
-        return ClassifyImage(imageName, colors, areaSize, delta, limitVector, classVectors, radii);
+        _radii = GetRadii(_classVectors, classBinaryMatrices);
+        //Console.WriteLine("Optimal radii: " + _radii);
     }
 
     /**
@@ -45,10 +45,10 @@ public class Classifier
      * @param delta       значення дельти для СКД
      * @return бінарну матрицю зображення
      */
-    private static int[][] GetBinaryMatrix(int[][] values, List<double> limitVector, int delta)
+    private static int[][] GetBinaryMatrix(IReadOnlyList<int[]> values, IReadOnlyList<double> limitVector, int delta)
     {
-        var binaryMatrix = new int[values.Length][];
-        for (var i = 0; i < values.Length; i++)
+        var binaryMatrix = new int[values.Count][];
+        for (var i = 0; i < values.Count; i++)
         {
             binaryMatrix[i] = new int[values[0].Length];
             for (var j = 0; j < values[0].Length; j++)
@@ -74,7 +74,7 @@ public class Classifier
      * @param values значення кольорів базового класу
      * @return вектор, який задає СКД
      */
-    private static List<double> GetLimitVector(int[][] values)
+    private static List<double> GetLimitVector(IReadOnlyList<int[]> values)
     {
         var limitVector = new List<double>();
         for (var i = 0; i < values[0].Length; i++)
@@ -85,7 +85,7 @@ public class Classifier
                 sum += row[i];
             }
 
-            limitVector.Add(sum / values.Length);
+            limitVector.Add(sum / values.Count);
         }
 
         return limitVector;
@@ -103,37 +103,30 @@ public class Classifier
      * @param radii        радіуси контейнерів кожного класу
      * @throws IOException
      */
-    private static List<FramePrediction> ClassifyImage(string imageName,
-        List<Color> colors,
-        int areaSize,
-        int delta,
-        List<double> limitVector,
-        int[][] classVectors,
-        List<int> radii)
+    public static List<FramePrediction> ClassifyImage(Image image)
     {
         var result = new List<FramePrediction>();
-        FontCollection collection = new();
-        var family = collection.Add("/home/ok/OpenSans-Regular.ttf");
-        var font = family.CreateFont(12, FontStyle.Italic);
-        using var image = Image.Load(File.OpenRead(imageName));
         /* Проходимо по всім квадратним областям зі стороною areaSize у зображенні, яке потрібно класифікувати */
-        for (var i = 0; i < image.Width; i += areaSize)
+        for (var x = 0; x < image.Width; x += _areaSize)
         {
-            for (var j = 0; j < image.Height; j += areaSize)
+            for (var y = 0; y < image.Height; y += _areaSize)
             {
                 try
                 {
                     /* Вирізаємо квадратну область, перетворюємо її у бінарну матрицю та проводимо екзамен */
                     //BufferedImage crop = image.getSubimage(i, j, areaSize, areaSize);
-                    var crop = image.Clone(x => x.Crop(new Rectangle(i, j, areaSize, areaSize))).CloneAs<Rgba32>();
+                    var x1 = x;
+                    var y1 = y;
+                    var crop = image.Clone(sourceImage => sourceImage.Crop(new Rectangle(x1, y1, _areaSize, _areaSize)))
+                        .CloneAs<Rgba32>();
                     var cropValues = ImgToArray(crop);
-                    var cropBinaryMatrix = GetBinaryMatrix(cropValues, limitVector, delta);
+                    var cropBinaryMatrix = GetBinaryMatrix(cropValues, _limitVector, _delta);
                     var classNumber = -1;
                     double classValue = 0;
                     /* Проводимо екзамен області відносно кожного класу */
-                    for (var k = 0; k < classVectors.Length; k++)
+                    for (var k = 0; k < _classVectors.Length; k++)
                     {
-                        var res = Exam(classVectors[k], radii[k], cropBinaryMatrix);
+                        var res = Exam(_classVectors[k], _radii[k], cropBinaryMatrix);
                         /* Якщо значення після екзамену більше за поточне значення, то відносимо область до цього класу */
                         if (res > classValue)
                         {
@@ -142,26 +135,17 @@ public class Classifier
                         }
                     }
 
-                    /* Якщо вдалося класифікувати область, то помічаємо її на вихідному зображенні відповідним номером та кольором */
-                    if (classNumber != -1)
-                    {
-                        image.Mutate(x => x.DrawText(classNumber.ToString(), font, colors[classNumber],
-                            new PointF(i + areaSize / 2, j + areaSize / 2)));
-                    }
 
-                    result.Add(new FramePrediction
-                        { X = i, Y = j, Class = classNumber });
+                    result.Add(new FramePrediction { X = x, Y = y, Class = classNumber });
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.Message);
+                    //Console.WriteLine(e.Message);
                 }
             }
         }
 
-        /* Зберігаємо зображення після класифікації */
-        image.Save(File.OpenWrite($"result_{imageName}_{DateTime.Now.ToString(ResultDateFormat)}.png"),
-            new PngEncoder()); //Replace Png encoder with the file format of choice
+
         return result;
     }
 
@@ -170,17 +154,17 @@ public class Classifier
         var optimalDelta = 0;
         double optimalDeltaCriterionValue = 0;
         /* Шукаємо оптимальне значення у інтервалі [1, 120] */
-        Console.WriteLine("Calculation of the optimal delta");
-        Console.WriteLine("Delta | criterion value | criterion value in working area");
+        //Console.WriteLine("Calculation of the optimal delta");
+        //Console.WriteLine("Delta | criterion value | criterion value in working area");
         for (var delta = 1; delta <= 120; delta++)
         {
             /* Розраховуємо вектор, який задає СКД, бінарні матриці та еталонні вектори кожного класу */
             var classBinaryMatrices = new List<int[][]>();
             var classVectors = new int[classesValues.Count][];
-            var limitVector = GetLimitVector(classesValues[0]);
+
             for (var i = 0; i < classesValues.Count; i++)
             {
-                var classBinaryMatrix = GetBinaryMatrix(classesValues[i], limitVector, delta);
+                var classBinaryMatrix = GetBinaryMatrix(classesValues[i], _limitVector, delta);
                 classBinaryMatrices.Add(classBinaryMatrix);
                 classVectors[i] = GetVectorFromBinaryMatrix(classBinaryMatrix);
             }
@@ -217,13 +201,15 @@ public class Classifier
                 optimalDeltaCriterionValue = currentValue;
             }
 
+            /*
             Console.WriteLine(delta + " " + sum.Average()
                               + " " + (sumWorkingArea.Average() > 0
                                   ? sumWorkingArea.Average()
                                   : -1));
+            */
         }
 
-        Console.WriteLine("Optimal delta: " + optimalDelta);
+        //Console.WriteLine("Optimal delta: " + optimalDelta);
 
         return optimalDelta;
     }
@@ -292,7 +278,7 @@ public class Classifier
         return distances;
     }
 
-    private static List<int[][]> GetClassesValues(List<string> classesImagesNames)
+    private static List<int[][]> GetClassesValues(List<Image<Rgba32>> classesImagesNames)
     {
         var classesValues = new List<int[][]>();
         foreach (var classesImagesName in classesImagesNames)
@@ -303,11 +289,6 @@ public class Classifier
         return classesValues;
     }
 
-    private static int[][] ImgToArray(string classesImagesName)
-    {
-        var image = Image.Load<Rgba32>(classesImagesName);
-        return ImgToArray(image);
-    }
 
     private static int[][] ImgToArray(Image<Rgba32> image)
     {
@@ -442,18 +423,18 @@ public class Classifier
         criterionValues.AddRange(GetCriterionValuesForClassesAndRadii(classVectors, classBinaryMatrices, pairs));
         /* Знаходимо оптимальні радіуси */
         var radii = new List<int>();
-        Console.WriteLine("Calculation of radii for classes");
+        //Console.WriteLine("Calculation of radii for classes");
         for (var i = 0; i < criterionValues.Count; i++)
         {
-            Console.WriteLine("Class number: " + i);
-            Console.WriteLine("Is working area | radius | criterion value");
+            //Console.WriteLine("Class number: " + i);
+            //Console.WriteLine("Is working area | radius | criterion value");
             var res = criterionValues[i];
             var index = -1;
             double value = -1;
             /* Проходимо по всім можливив значенням радіуса */
             for (var j = 0; j < res.Count; j++)
             {
-                Console.WriteLine(res[j].Item2 + " " + j + " " + res[j].Item1);
+                //Console.WriteLine(res[j].Item2 + " " + j + " " + res[j].Item1);
                 /* Якщо значення критерію у робочій області для даного радіуса більше за поточне оптимальне, то запам'ятовуємо його та значення радіуса */
                 if (res[j].Item2 && res[j].Item1 >= value)
                 {

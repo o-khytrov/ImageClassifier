@@ -53,12 +53,13 @@
 
             const sourceImageData = sourceContext.getImageData(mousex - size / 2, mousey - size / 2, size, size);
 
-            DotNet.invokeMethod('ImageClassifier.Web', 'AddRecognitionClass', sourceImageData.width, sourceImageData.height,  new Uint8Array(sourceImageData.data));
-                
-        }
-        overlayCanvas.onmousemove = (e) => this.drawBox(e, overlayCanvas, ctx);    }
+            DotNet.invokeMethod('ImageClassifier.Web', 'SelectArea', sourceImageData.width, sourceImageData.height, new Uint8Array(sourceImageData.data));
 
-    function drawBox(ev, overlayCanvas, ctx) {        
+        }
+        overlayCanvas.onmousemove = (e) => this.drawBox(e, overlayCanvas, ctx);
+    }
+
+    function drawBox(ev, overlayCanvas, ctx) {
         let target = ev.target;
         let canvasx = target.parentElement.offsetLeft;
         let canvasy = target.parentElement.offsetTop;
@@ -92,6 +93,7 @@
                         let ctx = canvasElement.getContext("2d");
                         ctx.drawImage(this, 0, 0, w, h);
                         setupOverlay(canvasElement, w, h);
+                        DotNet.invokeMethod('ImageClassifier.Web', 'AddSourceImage', w, h, new Uint8Array(ctx.getImageData(0, 0, w, h).data));
                         //initExamCanvas();
                         //app.sourceImageSelected = true;
                     }
@@ -102,7 +104,7 @@
         }
     }
 
-    
+
 </script>
 <style>
     .overlay {
