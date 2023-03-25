@@ -4,6 +4,7 @@
 @using SixLabors.ImageSharp.Formats.Png
 @using SixLabors.Fonts
 @using System.Diagnostics
+@using SixLabors.ImageSharp.Drawing
 @using SixLabors.ImageSharp.Drawing.Processing
 @using SixLabors.ImageSharp.Processing
 @inject IJSRuntime JsRuntime
@@ -14,7 +15,6 @@
 <input class="mb-2" type="file" id="addMap" onchange="addMap(this)">
 <div>
     <button class="btn btn-primary" @onclick="Classify">Classify</button>
-    <button class="btn btn-primary" @onclick="LogTask">LogTask</button>
     <table>
         <thead>
         <tr>
@@ -99,30 +99,16 @@
         RecognitionClasses.Remove(recognitionClass);
     }
 
-    void Fibonacci_Iterative(long len)
-    {
-        int a = 0, b = 1, c = 0;
-        for (long i = 2; i < len; i++)
-        {
-            c = a + b;
-
-            a = b;
-            b = c;
-        }
-    }
-
-    public void LogTask()
-    {
-        var sw = Stopwatch.StartNew();
-        Fibonacci_Iterative(9999999999);
-        Console.WriteLine(sw.Elapsed);
-    }
 
     private void Classify()
     {
-        var colors = new List<Color>
+       
+        var brushes = new List<IBrush>
         {
-            Color.Blue, Color.Orange, Color.Red, Color.Black
+            Brushes.Solid(Color.Blue.WithAlpha(0.5f)),
+            Brushes.Solid(Color.Orange.WithAlpha(0.5f)),
+            Brushes.Solid(Color.Red.WithAlpha(0.5f)),
+            Brushes.Solid(Color.Black.WithAlpha(0.5f)),
         };
 
         Classifier.Setup(RecognitionClasses.Select(x => x.Image).ToList(), FrameSize);
@@ -140,8 +126,8 @@
             {
                 if (prediction.Class > -1)
                 {
-                    image.Mutate(x => x.DrawText(prediction.Class.ToString(), _font, colors[prediction.Class],
-                        new PointF(prediction.X + FrameSize / 2, prediction.Y + FrameSize / 2)));
+                    var yourPolygon = new Rectangle(prediction.X, prediction.Y, FrameSize, FrameSize);
+                    image.Mutate(x => x.Fill(brushes[prediction.Class], yourPolygon));
                 }
             }
 
