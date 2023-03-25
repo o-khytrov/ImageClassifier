@@ -65,10 +65,10 @@
     protected override void OnInitialized()
     {
         FontCollection collection = new();
-        var resourceName = $"{Assembly.GetExecutingAssembly().GetName().Name}.Fonts.OpenSans-Regular.ttf";
-        var fontStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName);
-        var family = collection.Add(fontStream);
-        _font = family.CreateFont(12, FontStyle.Italic);
+    //var resourceName = $"{Assembly.GetExecutingAssembly().GetName().Name}.Fonts.OpenSans-Regular.ttf";
+    //var fontStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName);
+    //var family = collection.Add(fontStream);
+    //_font = family.CreateFont(12, FontStyle.Italic);
 
         JsService.ImageAreaSelected += AddRecognitionClass;
         JsService.SourceImageSelected += SetBaseImage;
@@ -108,6 +108,7 @@
 
         Classifier.Setup(RecognitionClasses.Select(x => x.Image).ToList(), FrameSize);
         Console.WriteLine("setup completed");
+    /*
         if (BaseImage is not null)
         {
             var predictions = Classifier.ClassifyImage(BaseImage);
@@ -126,6 +127,7 @@
             ResultBase64 = image.ToBase64String(PngFormat.Instance);
             StateHasChanged();
         }
+        */
     }
 
 }
