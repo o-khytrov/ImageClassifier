@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <title>ImageClassifier.Web</title>
+    <base href="/"/>
+    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet"/>
+    <link href="css/app.css" rel="stylesheet"/>
+    <link href="ImageClassifier.Web.styles.css" rel="stylesheet"/>
+</head>
+
+<body>
+<div id="app">Loading...</div>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+<script src="_framework/blazor.webassembly.js"></script>
+</body>
+
+</html>
+<script>
+    const frameSize = 50;
+
+    function setupOverlay(sourceCanvas, width, height) {
+        //Canvas
+        const overlayCanvas = document.createElement('canvas');
+        overlayCanvas.setAttribute("class", "overlay");
+        overlayCanvas.setAttribute("width", width.toString());
+        overlayCanvas.setAttribute("height", height.toString());
+        sourceCanvas.parentElement.appendChild(overlayCanvas);
+        const ctx = overlayCanvas.getContext('2d');
+        let mousex = -1;
+        let mousey = -1;
+
+        //Mouseup
+        overlayCanvas.onmouseup = (ev) => {
+            let size = frameSize;
+            let sourceContext = sourceCanvas.getContext("2d");
+            let target = ev.target;
+            let canvasx = target.parentElement.offsetLeft;
+            let canvasy = target.parentElement.offsetTop;
+
+            let clientX = ev.pageX;
+            let clientY = ev.pageY;
+
+            mousex = clientX - canvasx;
+            mousey = clientY - canvasy;
+
+            const sourceImageData = sourceContext.getImageData(mousex - size / 2, mousey - size / 2, size, size);
+
+            DotNet.invokeMethod('ImageClassifier.Web', 'SelectArea', sourceImageData.width, sourceImageData.height, new Uint8Array(sourceImageData.data));
+
+        }
+        overlayCanvas.onmousemove = (e) => this.drawBox(e, overlayCanvas, ctx);
+    }
+
+    function drawBox(ev, overlayCanvas, ctx) {
+        let target = ev.target;
+        let canvasx = target.parentElement.offsetLeft;
+        let canvasy = target.parentElement.offsetTop;
+        let clientX = ev.pageX;
+        let clientY = ev.pageY;
+        let mousex = clientX - canvasx;
+        let mousey = clientY - canvasy;
+        let size = frameSize;
+        ctx.clearRect(-1, 0, overlayCanvas.width, overlayCanvas.height); //clear canvas
+        ctx.beginPath();
+        ctx.rect(mousex - size / 2, mousey - size / 2, size, size);
+        ctx.strokeStyle = 'red';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    }
+
+    function addMap(input) {
+        if (input.files.length > 0) {
+            for (let i = 0; i < input.files.length; i++) {
+                let fr = new FileReader();
+                fr.fileName = input.files[i].name;
+                fr.onload = function (e) {
+                    let img = new Image();
+                    img.onload = function () {
+                        console.log("image on load");
+                        let canvasElement = document.getElementById('source');
+                        let w = Math.round(this.width / frameSize) * frameSize;
+                        let h = Math.round(this.height / frameSize) * frameSize;
+                        canvasElement.width = w;
+                        canvasElement.height = h;
+                        let ctx = canvasElement.getContext("2d");
+                        ctx.drawImage(this, 0, 0, w, h);
+                        setupOverlay(canvasElement, w, h);
+                        DotNet.invokeMethod('ImageClassifier.Web', 'AddSourceImage', w, h, new Uint8Array(ctx.getImageData(0, 0, w, h).data));
+                        //initExamCanvas();
+                        //app.sourceImageSelected = true;
+                    }
+                    img.src = fr.result;
+                }
+                fr.readAsDataURL(input.files[i]);
+            }
+        }
+    }
+
+
+</script>
+<style>
+    .overlay {
+        cursor: crosshair;
+
+        position: absolute;
+        left: 0;
+    }
+
+    #map_container {
+        position: relative;
+    }
+
+    canvas {
+        border: 1px solid #000000;
+    }
+
+    .slider {
+        width: 600px;
+    }
+
+    .preview {
+        cursor: pointer;
+    }
+</style>
