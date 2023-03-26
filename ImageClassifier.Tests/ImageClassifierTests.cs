@@ -42,12 +42,12 @@ public class ImageClassifierTests
             Color.Blue, Color.Orange, Color.Red, Color.Black
         };
         var classesImages = classesImagesNames.Select(Image.Load<Rgba32>).ToList();
-
-        Classifier.Setup(classesImages, areaSize);
+        var classifier = new Classifier();
+        classifier.Setup(classesImages, areaSize);
 
         //Act
         var image = Image.Load(imageName);
-        var predictions = Classifier.ClassifyImage(image);
+        var predictions = classifier.ClassifyImage(image);
 
         AddPredictionsToImage(predictions, image, colors, areaSize, imageName);
 
@@ -82,8 +82,8 @@ public class ImageClassifierTests
                 image.Mutate(x => x.DrawText(prediction.Class.ToString(), _font, colors[prediction.Class],
                     new PointF(prediction.X + areaSize / 2, prediction.Y + areaSize / 2)));
                 
-                //var yourPolygon = new Rectangle(prediction.X, prediction.Y, areaSize, areaSize);
-                //image.Mutate(x => x.Fill(brushes[prediction.Class], yourPolygon));  
+               // var yourPolygon = new Rectangle(prediction.X, prediction.Y, areaSize, areaSize);
+               // image.Mutate(x => x.Fill(brushes[prediction.Class], yourPolygon));  
             }
         }
 

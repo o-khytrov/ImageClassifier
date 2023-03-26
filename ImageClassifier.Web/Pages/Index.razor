@@ -111,13 +111,14 @@
             Brushes.Solid(Color.Black.WithAlpha(0.35f)),
         };
 
-        Classifier.Setup(RecognitionClasses.Select(x => x.Image).ToList(), FrameSize);
+        var classifier = new Classifier();
+        classifier.Setup(RecognitionClasses.Select(x => x.Image).ToList(), FrameSize);
 
         Console.WriteLine("setup completed");
 
         if (BaseImage is not null)
         {
-            var predictions = Classifier.ClassifyImage(BaseImage);
+            var predictions = classifier.ClassifyImage(BaseImage);
 
             Console.WriteLine("Predictions made");
 
