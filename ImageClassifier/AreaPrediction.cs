@@ -1,6 +1,6 @@
 namespace ImageClassifier;
 
-public class FramePrediction
+public class AreaPrediction
 {
     public int X { get; set; }
 

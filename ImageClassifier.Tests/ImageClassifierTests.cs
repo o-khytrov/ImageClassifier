@@ -53,7 +53,7 @@ public class ImageClassifierTests
 
         //Assert
         var expectedPredictions =
-            JsonConvert.DeserializeObject<List<FramePrediction>>(File.ReadAllText("ExpectedPredictions.json"));
+            JsonConvert.DeserializeObject<List<AreaPrediction>>(File.ReadAllText("ExpectedPredictions.json"));
         Assert.AreEqual(expectedPredictions.Count, predictions.Count);
 
         for (var i = 0; i < predictions.Count; i++)
@@ -64,7 +64,7 @@ public class ImageClassifierTests
         }
     }
 
-    private void AddPredictionsToImage(List<FramePrediction> predictions, Image image, List<Color> colors, int areaSize,
+    private void AddPredictionsToImage(List<AreaPrediction> predictions, Image image, List<Color> colors, int areaSize,
         string imageName)
     {
         var brushes = new List<IBrush>
