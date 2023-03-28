@@ -32,10 +32,11 @@
         {
             <tr>
                 <td>
-                    Recognition class @(RecognitionClasses.IndexOf(rc))
+                    <input type="text" @bind="@rc.Name"/>
                 </td>
                 <td>
-                    <input type="color" name="favcolor" @bind="rc.Color"/>
+                    <input type="color" name="favcolor" @bind="@rc.Color"/>
+                    <label>@rc.Color</label>
                 </td>
                 <td>
                     <img src="@rc.DataUrl" style="width:@(FrameSize * 2)px; height:@(FrameSize * 2)px"/>
@@ -60,6 +61,11 @@
 
 
 @code{
+
+    private static readonly List<string> _colors = new()
+    {
+        "#38e819", "#1a4ca5", "#47a7e1", "#859b61", "#9d0f52", "#b8dc63", "#5ff930", "#21c424", "#c0a9eb"
+    };
 
     private int FrameSize { get; set; } = 50;
 
@@ -102,7 +108,9 @@
 
         var recognitionClass = new RecognitionClass(image)
         {
-            DataUrl = image.ToBase64String(PngFormat.Instance), Color = GetNextColor(RecognitionClasses.Count)
+            Name = $"Class {RecognitionClasses.Count}"
+            DataUrl = image.ToBase64String(PngFormat.Instance),
+            Color = _colors[RecognitionClasses.Count]
         };
 
         RecognitionClasses.Add(recognitionClass);
