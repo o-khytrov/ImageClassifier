@@ -108,7 +108,7 @@
 
         var recognitionClass = new RecognitionClass(image)
         {
-            Name = $"Class {RecognitionClasses.Count}"
+            Name = $"Class {RecognitionClasses.Count}",
             DataUrl = image.ToBase64String(PngFormat.Instance),
             Color = _colors[RecognitionClasses.Count]
         };
