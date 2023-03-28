@@ -10,6 +10,9 @@ public class RecognitionClass
 {
     public Image<Rgba32> Image { get; }
 
+
+    public string Color { get; set; }
+
     public string? DataUrl { get; set; }
 
     public RecognitionClass(Image<Rgba32> image, string name = null)

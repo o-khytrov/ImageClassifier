@@ -23,6 +23,7 @@
         <tr>
             <th>Клас</th>
             <th>Зображення</th>
+            <th>Колір</th>
             <th>Опції</th>
         </tr>
         </thead>
@@ -32,6 +33,9 @@
             <tr>
                 <td>
                     Recognition class @(RecognitionClasses.IndexOf(rc))
+                </td>
+                <td>
+                    <input type="color" name="favcolor" @bind="rc.Color"/>
                 </td>
                 <td>
                     <img src="@rc.DataUrl" style="width:@(FrameSize * 2)px; height:@(FrameSize * 2)px"/>
@@ -68,6 +72,7 @@
 
     private int CurrentProgress { get; set; }
 
+
     private int PredictionsCount { get; set; }
 
     protected override void OnInitialized()
@@ -86,15 +91,19 @@
         BaseImage = Image.LoadPixelData<Rgba32>(imageData.Data, imageData.Width, imageData.Height);
     }
 
+    private string GetNextColor(int index)
+    {
+        return "#" + Color.WebSafePalette.Slice(index, 1).ToArray()[0].ToHex().ToLower();
+    }
+
     private void AddRecognitionClass(ImageData imageData)
     {
         var image = Image.LoadPixelData<Rgba32>(imageData.Data, imageData.Width, imageData.Height);
 
         var recognitionClass = new RecognitionClass(image)
         {
-            DataUrl = image.ToBase64String(PngFormat.Instance)
+            DataUrl = image.ToBase64String(PngFormat.Instance), Color = GetNextColor(RecognitionClasses.Count)
         };
-
 
         RecognitionClasses.Add(recognitionClass);
         StateHasChanged();
@@ -109,13 +118,7 @@
 
     private void Classify()
     {
-        var brushes = new List<IBrush>
-        {
-            Brushes.Solid(Color.Blue.WithAlpha(0.35f)),
-            Brushes.Solid(Color.Orange.WithAlpha(0.35f)),
-            Brushes.Solid(Color.Red.WithAlpha(0.35f)),
-            Brushes.Solid(Color.Black.WithAlpha(0.35f)),
-        };
+        var brushes = RecognitionClasses.Select(x => Brushes.Solid(Color.ParseHex(x.Color).WithAlpha(0.35f))).ToList();
 
         var classifier = new Classifier();
         classifier.Setup(RecognitionClasses.Select(x => x.Image).ToList(), FrameSize);
