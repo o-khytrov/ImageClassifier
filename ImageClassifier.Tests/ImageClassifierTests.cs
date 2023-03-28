@@ -43,7 +43,7 @@ public class ImageClassifierTests
         };
         var classesImages = classesImagesNames.Select(Image.Load<Rgba32>).ToList();
         var classifier = new Classifier();
-        classifier.Setup(classesImages, areaSize);
+        classifier.Train(classesImages, areaSize);
 
         //Act
         var image = Image.Load(imageName);

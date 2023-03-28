@@ -6,24 +6,20 @@
 @using SixLabors.ImageSharp.Drawing.Processing
 @using SixLabors.ImageSharp.Processing
 @inject IJSRuntime JsRuntime
+@inject Classifier Classifier
 
 <div class="slidecontainer">
-    <label for="delta">Frame size @FrameSize</label>
+    <label for="delta">Розмір кадру @FrameSize</label>
     <input type="range" step="25" min="25" max="100" class="slider" id="frameSize" @bind="@FrameSize">
 </div>
 <input class="mb-2" type="file" id="addMap" onchange="addMap(this)">
 <div>
-
-    <button class="btn btn-primary" @onclick="Classify">Classify</button>
-    <div class="progress">
-        <div class="progress-bar" role="progressbar" aria-valuenow="@CurrentProgress" aria-valuemin="0" aria-valuemax="@PredictionsCount"></div>
-    </div>
     <table>
         <thead>
         <tr>
             <th>Клас</th>
-            <th>Зображення</th>
             <th>Колір</th>
+            <th>Зображення</th>
             <th>Опції</th>
         </tr>
         </thead>
@@ -32,10 +28,10 @@
         {
             <tr>
                 <td>
-                    <input type="text" @bind="@rc.Name"/>
+                    <input type="text" class="form-control" @bind="@rc.Name"/>
                 </td>
                 <td>
-                    <input type="color" name="favcolor" @bind="@rc.Color"/>
+                    <input type="color" class="form-control-color" name="favcolor" @bind="@rc.Color"/>
                     <label>@rc.Color</label>
                 </td>
                 <td>
@@ -49,6 +45,11 @@
         </tbody>
     </table>
 </div>
+<button class="btn btn-primary" disabled="@(RecognitionClasses.Count < 2)" @onclick="Train">Навчання</button>
+<button class="btn btn-primary" disabled="@(!IsTrained)" @onclick="Predict">Екзамен</button>
+<div class="progress">
+    <div class="progress-bar" role="progressbar" aria-valuenow="@CurrentProgress" aria-valuemin="0" aria-valuemax="@PredictionsCount"></div>
+</div>
 <div id="map_container">
     <canvas id="source"></canvas>
 </div>
@@ -59,13 +60,14 @@
     </div>
 }
 
-
 @code{
 
-    private static readonly List<string> _colors = new()
+    private static readonly List<string> Colors = new()
     {
         "#38e819", "#1a4ca5", "#47a7e1", "#859b61", "#9d0f52", "#b8dc63", "#5ff930", "#21c424", "#c0a9eb"
     };
+
+    private bool IsTrained;
 
     private int FrameSize { get; set; } = 50;
 
@@ -110,7 +112,7 @@
         {
             Name = $"Class {RecognitionClasses.Count}",
             DataUrl = image.ToBase64String(PngFormat.Instance),
-            Color = _colors[RecognitionClasses.Count]
+            Color = Colors[RecognitionClasses.Count]
         };
 
         RecognitionClasses.Add(recognitionClass);
@@ -123,19 +125,13 @@
         RecognitionClasses.Remove(recognitionClass);
     }
 
-
-    private void Classify()
+    private void Predict()
     {
         var brushes = RecognitionClasses.Select(x => Brushes.Solid(Color.ParseHex(x.Color).WithAlpha(0.35f))).ToList();
 
-        var classifier = new Classifier();
-        classifier.Setup(RecognitionClasses.Select(x => x.Image).ToList(), FrameSize);
-
-        Console.WriteLine("setup completed");
-
         if (BaseImage is not null)
         {
-            var predictions = classifier.ClassifyImage(BaseImage);
+            var predictions = Classifier.ClassifyImage(BaseImage);
             PredictionsCount = predictions.Count;
 
             Console.WriteLine("Predictions made");
@@ -156,6 +152,14 @@
             ResultBase64 = image.ToBase64String(PngFormat.Instance);
             StateHasChanged();
         }
+    }
+
+    private void Train()
+    {
+        Classifier.Train(RecognitionClasses.Select(x => x.Image).ToList(), FrameSize);
+
+        Console.WriteLine("setup completed");
+        IsTrained = true;
     }
 
 }

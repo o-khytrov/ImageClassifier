@@ -10,7 +10,7 @@ public class Classifier
     private int[][] _classVectors;
 
 
-    public void Setup(List<Image<Rgba32>> classesImages, int areaSize)
+    public void Train(List<Image<Rgba32>> classesImages, int areaSize)
     {
         _areaSize = areaSize;
         // Отримуємо значення кольорів пікселів для зображень кожного класу
