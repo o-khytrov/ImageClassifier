@@ -7,8 +7,8 @@
   "linkerEnabled": true,
   "resources": {
     "assembly": {
-      "ImageClassifier.dll": "sha256-klus1DVbks1A95OqtrmmIycbzMOnrcOj7BCjR3QQEZM=",
-      "ImageClassifier.Web.dll": "sha256-ADJMsQ79mVMgtNszgcYe3SNxtqXFFH1Gg+Sra3N3D98=",
+      "ImageClassifier.dll": "sha256-r63dJcRz9Ibacqzmbm3+Eg7dVf6CN+Hfhk4s\/LT1v9g=",
+      "ImageClassifier.Web.dll": "sha256-UjteuZ2jryx7ZBTg34qJPwyp06W1XYOJTb19KBUGS4E=",
       "Microsoft.AspNetCore.Components.dll": "sha256-3Je1fTlv9AN5sJLUzrigK0+RBYql+t4S1AYcEAv4FPE=",
       "Microsoft.AspNetCore.Components.Web.dll": "sha256-0yCcULHtWBrHOqJJi1m34+Xd+S67k7NMo\/JdsZfvcpM=",
       "Microsoft.AspNetCore.Components.WebAssembly.dll": "sha256-VoOExk2fEE249K3Jayw1Nymq9Bc8LlKEWiOG9\/0GiNY=",
@@ -65,7 +65,7 @@
     "runtime": {
       "dotnet.7.0.4.02xlvaz8zx.js": "sha256-UfENhKxkGZ2D43JkeQPSH5bDLTWofQRIswJRLL9a2Wg=",
       "dotnet.timezones.blat": "sha256-UEt3EzX1Ts6UAzZ8vHZJ3Nb0gAVPqeNmtxuFnUvzxVI=",
-      "dotnet.wasm": "sha256-pHaoVx\/233bpxSBjHAhUcmsNE\/axHZVOkvjxNdJTw5A=",
+      "dotnet.wasm": "sha256-OAFlKVCPr75LjWbkquVkPpqRT99tA712DELzbyHuZc0=",
       "icudt_CJK.dat": "sha256-SZLtQnRc0JkwqHab0VUVP7T3uBPSeYzxzDnpxPpUnHk=",
       "icudt_EFIGS.dat": "sha256-8fItetYY8kQ0ww6oxwTLiT3oXlBwHKumbeP2pRF4yTc=",
       "icudt_no_CJK.dat": "sha256-L7sV7NEYP37\/Qr2FPCePo5cJqRgTXRwGHuwF5Q+0Nfs=",
@@ -74,7 +74,7 @@
     "runtimeAssets": {
       "dotnet.wasm": {
         "behavior": "dotnetwasm",
-        "hash": "sha256-pHaoVx\/233bpxSBjHAhUcmsNE\/axHZVOkvjxNdJTw5A="
+        "hash": "sha256-OAFlKVCPr75LjWbkquVkPpqRT99tA712DELzbyHuZc0="
       }
     },
     "satelliteResources": null
