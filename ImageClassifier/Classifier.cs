@@ -2,11 +2,14 @@
 
 public class Classifier
 {
-    private int _delta;
+    public int Delta { get; private set; }
+
     private List<int[][]> _classesValues;
     private int _areaSize;
     private List<double> _limitVector;
-    private List<int> _radii;
+
+    public List<int> Radii { get; private set; } = new();
+
     private int[][] _classVectors;
 
 
@@ -23,7 +26,7 @@ public class Classifier
         _limitVector = GetLimitVector(_classesValues[0]);
 
         // Знаходимо оптимальне значення дельти для СКД
-        _delta = GetOptimalDelta(_classesValues);
+        Delta = GetOptimalDelta(_classesValues);
 
         // Переводимо значення у бінарний вигляд та знаходимо еталонні вектори кожного класу
         var classBinaryMatrices = new List<int[][]>();
@@ -32,13 +35,13 @@ public class Classifier
 
         for (var i = 0; i < _classesValues.Count(); i++)
         {
-            var classBinaryMatrix = GetBinaryMatrix(_classesValues[i], _limitVector, _delta);
+            var classBinaryMatrix = GetBinaryMatrix(_classesValues[i], _limitVector, Delta);
             classBinaryMatrices.Add(classBinaryMatrix);
             _classVectors[i] = GetVectorFromBinaryMatrix(classBinaryMatrix);
         }
 
         // Знаходимо радіуси контейнера кожного класу 
-        _radii = GetRadii(_classVectors, classBinaryMatrices);
+        Radii = GetRadii(_classVectors, classBinaryMatrices);
         //Console.WriteLine("Optimal radii: " + _radii);
     }
 
@@ -137,13 +140,13 @@ public class Classifier
     private int Predict(Image<Rgba32> image)
     {
         var rgbaValues = ImgToArray(image);
-        var cropBinaryMatrix = GetBinaryMatrix(rgbaValues, _limitVector, _delta);
+        var cropBinaryMatrix = GetBinaryMatrix(rgbaValues, _limitVector, Delta);
         var classNumber = -1;
         double classValue = 0;
         // Проводимо екзамен області відносно кожного класу
         for (var k = 0; k < _classVectors.Length; k++)
         {
-            var res = Exam(_classVectors[k], _radii[k], cropBinaryMatrix);
+            var res = Exam(_classVectors[k], Radii[k], cropBinaryMatrix);
             // Якщо значення після екзамену більше за поточне значення, то відносимо область до цього класу
             if (res > classValue)
             {
