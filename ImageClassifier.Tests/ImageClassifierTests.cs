@@ -15,15 +15,12 @@ namespace ImageClassifier.Tests;
 
 public class ImageClassifierTests
 {
-    private Font _font;
-    private const string ResultDateFormat = "ddMMyy_HHmm";
-
-    public ImageClassifierTests()
+    private static readonly List<string> Colors = new()
     {
-        FontCollection collection = new();
-        var family = collection.Add("/home/ok/OpenSans-Regular.ttf");
-        _font = family.CreateFont(12, FontStyle.Italic);
-    }
+        "#38e819", "#1a4ca5", "#47a7e1", "#859b61", "#9d0f52", "#b8dc63", "#5ff930", "#21c424", "#c0a9eb"
+    };
+
+    private const string ResultDateFormat = "ddMMyy_HHmm";
 
     [SetUp]
     public void Setup()
@@ -43,6 +40,11 @@ public class ImageClassifierTests
         };
         var classesImages = classesImagesNames.Select(Image.Load<Rgba32>).ToList();
         var classifier = new Classifier();
+        var trainingResults = new List<TrainingEventArgs>();
+        classifier.TrainingIterationCompleted += (sender, args) =>
+        {
+            
+        };
         classifier.Train(classesImages, areaSize);
 
         //Act
@@ -67,23 +69,18 @@ public class ImageClassifierTests
     private void AddPredictionsToImage(List<AreaPrediction> predictions, Image image, List<Color> colors, int areaSize,
         string imageName)
     {
-        var brushes = new List<IBrush>
-        {
-            Brushes.Solid(Color.Blue.WithAlpha(0.1f)),
-            Brushes.Solid(Color.Orange.WithAlpha(0.1f)),
-            Brushes.Solid(Color.Red.WithAlpha(0.1f)),
-            Brushes.Solid(Color.Black.WithAlpha(0.1f)),
-        };
+        
+        var brushes = Colors.Select(x => Brushes.Solid(Color.ParseHex(x).WithAlpha(0.35f))).ToList();
         
         foreach (var prediction in predictions)
         {
             if (prediction.Class > -1)
             {
-                image.Mutate(x => x.DrawText(prediction.Class.ToString(), _font, colors[prediction.Class],
-                    new PointF(prediction.X + areaSize / 2, prediction.Y + areaSize / 2)));
+               // image.Mutate(x => x.DrawText(prediction.Class.ToString(), _font, colors[prediction.Class],
+                 //   new PointF(prediction.X + areaSize / 2, prediction.Y + areaSize / 2)));
                 
-               // var yourPolygon = new Rectangle(prediction.X, prediction.Y, areaSize, areaSize);
-               // image.Mutate(x => x.Fill(brushes[prediction.Class], yourPolygon));  
+                var yourPolygon = new Rectangle(prediction.X, prediction.Y, areaSize, areaSize);
+               image.Mutate(x => x.Fill(brushes[prediction.Class], yourPolygon));  
             }
         }
 

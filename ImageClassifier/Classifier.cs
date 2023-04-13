@@ -1,5 +1,27 @@
 ﻿namespace ImageClassifier;
 
+public class TrainingEventArgs : EventArgs
+{
+    /// <summary>
+    /// Значення Delta
+    /// </summary>
+    public int Delta { get; set; }
+
+    public int DeltaFrom { get; set; }
+
+    public int DeltaTo { get; set; }
+
+    /// <summary>
+    /// Середньє значення критерію
+    /// </summary>
+    public double CriterionValue { get; set; }
+
+    /// <summary>
+    /// Наявність робочої області
+    /// </summary>
+    public bool IsWorkingArea { get; set; }
+}
+
 public class Classifier
 {
     public int Delta { get; private set; }
@@ -12,6 +34,7 @@ public class Classifier
 
     private int[][] _classVectors;
 
+    public event EventHandler<TrainingEventArgs>? TrainingIterationCompleted;
 
     public void Train(List<Image<Rgba32>> classesImages, int areaSize)
     {
@@ -123,7 +146,7 @@ public class Classifier
                 }
                 catch (Exception e)
                 {
-                    //Console.WriteLine(e.Message);
+                    Console.WriteLine(e.Message);
                 }
             }
         }
@@ -160,12 +183,14 @@ public class Classifier
 
     private int GetOptimalDelta(IReadOnlyList<int[][]> classesValues)
     {
+        var deltaFrom = 1;
+        var deltaTo = 120;
         var optimalDelta = 0;
         double optimalDeltaCriterionValue = 0;
         // Шукаємо оптимальне значення у інтервалі [1, 120] 
         //Console.WriteLine("Calculation of the optimal delta");
         //Console.WriteLine("Delta | criterion value | criterion value in working area");
-        for (var delta = 1; delta <= 120; delta++)
+        for (var delta = deltaFrom; delta <= deltaTo; delta++)
         {
             // Розраховуємо вектор, який задає СКД, бінарні матриці та еталонні вектори кожного класу 
             var classBinaryMatrices = new List<int[][]>();
@@ -205,12 +230,15 @@ public class Classifier
                 optimalDeltaCriterionValue = currentValue;
             }
 
-            /*
-            Console.WriteLine(delta + " " + sum.Average()
-                              + " " + (sumWorkingArea.Average() > 0
-                                  ? sumWorkingArea.Average()
-                                  : -1));
-            */
+            var averageCriterionValue = sum.Average();
+            OnProcessCompleted(new TrainingEventArgs
+            {
+                Delta = delta,
+                DeltaFrom = deltaFrom,
+                DeltaTo = deltaTo,
+                CriterionValue = averageCriterionValue,
+                IsWorkingArea = averageCriterionValue > 0
+            });
         }
 
         //Console.WriteLine("Optimal delta: " + optimalDelta);
@@ -466,5 +494,11 @@ public class Classifier
     private double CalculateKullback(double alpha, double beta)
     {
         return (Math.Log((2 - (alpha + beta) + 0.1) / (alpha + beta + 0.1)) / Math.Log(2)) * (1 - (alpha + beta));
+    }
+
+
+    protected virtual void OnProcessCompleted(TrainingEventArgs e)
+    {
+        TrainingIterationCompleted?.Invoke(this, e);
     }
 }
