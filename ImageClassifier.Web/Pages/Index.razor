@@ -136,6 +136,8 @@
     private void Predict()
     {
         var brushes = RecognitionClasses.Select(x => Brushes.Solid(Color.ParseHex(x.Color).WithAlpha(0.35f))).ToList();
+        CurrentProgress = 0;
+        StateHasChanged();
 
         if (BaseImage is not null)
         {
@@ -145,8 +147,9 @@
             Console.WriteLine("Predictions made");
 
             Image image = BaseImage.Clone();
-            foreach (var prediction in predictions)
+            for (var i = 0; i < predictions.Count; i++)
             {
+                var prediction = predictions[i];
                 StateHasChanged();
                 if (prediction.Class > -1)
                 {
@@ -155,6 +158,9 @@
                     CurrentProgress++;
                     StateHasChanged();
                 }
+
+                CurrentProgress = i / (predictions.Count - i) / 100;
+                StateHasChanged();
             }
 
             ResultBase64 = image.ToBase64String(PngFormat.Instance);
