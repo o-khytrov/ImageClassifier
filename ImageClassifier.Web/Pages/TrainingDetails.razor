@@ -6,14 +6,10 @@
 @inject Classifier Classifier
 
 <h3>Деталі тренування</h3>
-<div style="height: 500px">
-    <Chart Config="@_configDeltaCriterion"></Chart>
-</div>
+<Chart Config="@_configDeltaCriterion"></Chart>
 @foreach (var config in _criterionRadiusConfigs)
 {
-    <div>
-        <Chart Config="@config"></Chart>
-    </div>
+    <Chart Config="@config"></Chart>
 }
 
 
