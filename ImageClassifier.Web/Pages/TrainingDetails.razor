@@ -8,11 +8,10 @@
 <h3>Деталі тренування</h3>
 <div style="height: 500px">
     <Chart Config="@_configDeltaCriterion"></Chart>
-
 </div>
 @foreach (var config in _criterionRadiusConfigs)
 {
-    <div style="max-height: 500px">
+    <div>
         <Chart Config="@config"></Chart>
     </div>
 }
