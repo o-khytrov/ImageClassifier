@@ -40,6 +40,8 @@ public class TrainingEventArgs : EventArgs
 public class Classifier
 {
     public List<TrainingEventArgs> TrainingHistory { get; set; } = new();
+
+    public bool IsTrained = false;
     public int Delta { get; private set; }
 
     private List<int[][]> _classesValues;
@@ -58,6 +60,7 @@ public class Classifier
         // Отримуємо значення кольорів пікселів для зображень кожного класу
         _classesValues = GetClassesValues(classesImages);
         Train();
+        IsTrained = true;
     }
 
     private void Train()

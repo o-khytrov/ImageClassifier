@@ -6,15 +6,40 @@
 @inject Classifier Classifier
 
 <h3>Деталі тренування</h3>
-<Chart Config="@_configDeltaCriterion"></Chart>
+<table class="table table-bordered">
+    <thead class="thead-dark">
+    <th>Delta</th>
+    <th>КФЕ</th>
+    <th>Робоча область</th>
+    </thead>
+    <tbody>
+    @foreach (var iteration in testData)
+    {
+        <tr>
+            <td>
+                @iteration.Delta
+            </td>
+            <td>
+                @iteration.CriterionValue
+            </td>
+            <td>
+                @iteration.IsWorkingArea
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+<Chart Height="80" Config="@_configDeltaCriterion"></Chart>
+
 @foreach (var config in _criterionRadiusConfigs)
 {
-    <Chart Config="@config"></Chart>
+    <Chart Height="80" Config="@config"></Chart>
 }
 
 
 @code {
     private LineConfig? _configDeltaCriterion;
+    private List<TrainingEventArgs> testData;
 
     private List<LineConfig> _criterionRadiusConfigs = new();
 
@@ -31,11 +56,21 @@
 
     protected override async Task OnInitializedAsync()
     {
-    //var testDataJson = await ReadTestData();
-    //var testData = JsonConvert.DeserializeObject<List<TrainingEventArgs>>(testDataJson);
-        var testData = Classifier.TrainingHistory;
+        int optimalDelta;
+        if (Classifier.IsTrained)
+        {
+            testData = Classifier.TrainingHistory;
+            optimalDelta = Classifier.Delta;
+        }
+        else
+        {
+            var testDataJson = await ReadTestData();
+            testData = JsonConvert.DeserializeObject<List<TrainingEventArgs>>(testDataJson);
+            optimalDelta = 44;
+        }
+
         _configDeltaCriterion = GetDeltaCriterionConfig(testData);
-        _criterionRadiusConfigs = GetCriterionRadiusConfig(testData, Classifier.Delta);
+        _criterionRadiusConfigs = GetCriterionRadiusConfig(testData, optimalDelta);
     }
 
     private static List<LineConfig> GetCriterionRadiusConfig(IEnumerable<TrainingEventArgs> testData, int deltaValue)
@@ -66,7 +101,7 @@
 
             var dataset = new LineDataset<double>(classTrainingResult.Select(x => x.CriterionValue).ToArray())
             {
-                Label = "КФЕ", BackgroundColor = "blue"
+                Label = "КФЕ",
             };
             var workingAreaDataset = new LineDataset<double>(classTrainingResult.Select(x =>
             {
@@ -81,8 +116,9 @@
                 BackgroundColor = "yellow", Label = "Робоча область",
             };
 
-            configCriterionRadius.Data.Datasets.Add(workingAreaDataset);
+
             configCriterionRadius.Data.Datasets.Add(dataset);
+            configCriterionRadius.Data.Datasets.Add(workingAreaDataset);
             configs.Add(configCriterionRadius);
         }
 
