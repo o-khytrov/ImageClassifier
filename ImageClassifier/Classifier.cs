@@ -1,7 +1,17 @@
 ﻿namespace ImageClassifier;
 
+public class RadiusData
+{
+    public double CriterionValue { get; set; }
+
+    public int Radius { get; set; }
+
+    public bool IsWorkingArea { get; set; }
+}
+
 public class TrainingEventArgs : EventArgs
 {
+    
     /// <summary>
     /// Значення Delta
     /// </summary>
@@ -20,10 +30,16 @@ public class TrainingEventArgs : EventArgs
     /// Наявність робочої області
     /// </summary>
     public bool IsWorkingArea { get; set; }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public List<List<RadiusData>> Radii { get; set; }
 }
 
 public class Classifier
 {
+    public List<TrainingEventArgs> TrainingHistory { get; set; } = new();
     public int Delta { get; private set; }
 
     private List<int[][]> _classesValues;
@@ -205,21 +221,18 @@ public class Classifier
 
             // Шукаємо сусідів класів 
             var pairs = MakePairs(classVectors);
-            var criterionValues = new List<List<Tuple<double, bool>>>();
+            var criterionValues = new List<List<Tuple<int, double, bool>>>();
             // Для кожного класу знаходимо значення критеріїв 
 
-            foreach (var t in classVectors)
-            {
-                criterionValues.AddRange(GetCriterionValuesForClassesAndRadii(classVectors, classBinaryMatrices, pairs));
-            }
+            criterionValues.AddRange(GetCriterionValuesForClassesAndRadii(classVectors, classBinaryMatrices, pairs));
 
             // Обчислюємо середнє значення критерію та середнє значення критерію у робочій області 
             var sum = new List<double>();
             var sumWorkingArea = new List<double>();
             foreach (var criterionValue in criterionValues)
             {
-                sum.Add(criterionValue.Select(x => x.Item1).Max());
-                sumWorkingArea.Add(criterionValue.Select(pair => pair.Item2 ? pair.Item1 : -10).Max());
+                sum.Add(criterionValue.Select(x => x.Item2).Max());
+                sumWorkingArea.Add(criterionValue.Select(pair => pair.Item3 ? pair.Item2 : -10).Max());
             }
 
             var currentValue = sumWorkingArea.Average();
@@ -237,11 +250,15 @@ public class Classifier
                 DeltaFrom = deltaFrom,
                 DeltaTo = deltaTo,
                 CriterionValue = averageCriterionValue,
-                IsWorkingArea = averageCriterionValue > 0
+                IsWorkingArea = sumWorkingArea.Average() > 0,
+                Radii = criterionValues.Select(x => x.Select(r => new RadiusData()
+                {
+                    Radius = r.Item1,
+                    CriterionValue = r.Item2,
+                    IsWorkingArea = r.Item3
+                }).ToList()).ToList()
             });
         }
-
-        //Console.WriteLine("Optimal delta: " + optimalDelta);
 
         return optimalDelta;
     }
@@ -253,13 +270,13 @@ public class Classifier
     /// <param name="classBinaryMatrices">бінарні матриці класів</param>
     /// <param name="pairs">сусідні класи</param>
     /// <returns>значення критерію для класів та радіусів їх контейнера</returns>
-    private List<List<Tuple<double, bool>>> GetCriterionValuesForClassesAndRadii(IReadOnlyList<int[]> classVectors,
+    private List<List<Tuple<int, double, bool>>> GetCriterionValuesForClassesAndRadii(IReadOnlyList<int[]> classVectors,
         IReadOnlyList<int[][]> classBinaryMatrices, IReadOnlyList<int[]> pairs)
     {
-        var criterionValues = new List<List<Tuple<double, bool>>>();
+        var criterionValues = new List<List<Tuple<int, double, bool>>>();
         foreach (var classVector in classVectors)
         {
-            criterionValues.Add(new List<Tuple<double, bool>>());
+            criterionValues.Add(new List<Tuple<int, double, bool>>());
         }
 
         for (var classNumber = 0; classNumber < classVectors.Count; classNumber++)
@@ -282,7 +299,7 @@ public class Classifier
                 var criterionValue = CalculateCriterion(alpha, beta);
                 // Якщо перша достовірність >= 0.5, а помилка другого роду < 0.5, то це значення знаходиться у робочій області
                 var isWorkingArea = (d1 >= 0.5 && beta < 0.5);
-                criterionValues[classNumber].Add(new Tuple<double, bool>(criterionValue, isWorkingArea));
+                criterionValues[classNumber].Add(new Tuple<int, double, bool>(radius, criterionValue, isWorkingArea));
             }
         }
 
@@ -426,7 +443,7 @@ public class Classifier
         // Знаходимо сусідні класи
         var pairs = MakePairs(classVectors);
         // Знаходимо значення критерію для можливих значень радіусів
-        var criterionValues = new List<List<Tuple<double, bool>>>();
+        var criterionValues = new List<List<Tuple<int, double, bool>>>();
         criterionValues.AddRange(GetCriterionValuesForClassesAndRadii(classVectors, classBinaryMatrices, pairs));
         // Знаходимо оптимальні радіуси
         var radii = new List<int>();
@@ -443,9 +460,9 @@ public class Classifier
             {
                 //Console.WriteLine(res[j].Item2 + " " + j + " " + res[j].Item1);
                 // Якщо значення критерію у робочій області для даного радіуса більше за поточне оптимальне, то запам'ятовуємо його та значення радіуса
-                if (res[j].Item2 && res[j].Item1 >= value)
+                if (res[j].Item3 && res[j].Item2 >= value)
                 {
-                    value = res[j].Item1;
+                    value = res[j].Item2;
                     index = j;
                 }
             }
@@ -499,6 +516,7 @@ public class Classifier
 
     protected virtual void OnProcessCompleted(TrainingEventArgs e)
     {
+        TrainingHistory.Add(e);
         TrainingIterationCompleted?.Invoke(this, e);
     }
 }

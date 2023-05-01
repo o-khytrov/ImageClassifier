@@ -41,10 +41,8 @@ public class ImageClassifierTests
         var classesImages = classesImagesNames.Select(Image.Load<Rgba32>).ToList();
         var classifier = new Classifier();
         var trainingResults = new List<TrainingEventArgs>();
-        classifier.TrainingIterationCompleted += (sender, args) =>
-        {
-            
-        };
+        classifier.TrainingIterationCompleted += (sender, args) => { trainingResults.Add(args); };
+
         classifier.Train(classesImages, areaSize);
 
         //Act
@@ -52,6 +50,8 @@ public class ImageClassifierTests
         var predictions = classifier.ClassifyImage(image);
 
         AddPredictionsToImage(predictions, image, colors, areaSize, imageName);
+
+        BuildCharts(trainingResults);
 
         //Assert
         var expectedPredictions =
@@ -66,21 +66,25 @@ public class ImageClassifierTests
         }
     }
 
+    private void BuildCharts(List<TrainingEventArgs> trainingResults)
+    {
+        File.WriteAllText("training.json", JsonConvert.SerializeObject(trainingResults));
+    }
+
     private void AddPredictionsToImage(List<AreaPrediction> predictions, Image image, List<Color> colors, int areaSize,
         string imageName)
     {
-        
         var brushes = Colors.Select(x => Brushes.Solid(Color.ParseHex(x).WithAlpha(0.35f))).ToList();
-        
+
         foreach (var prediction in predictions)
         {
             if (prediction.Class > -1)
             {
-               // image.Mutate(x => x.DrawText(prediction.Class.ToString(), _font, colors[prediction.Class],
-                 //   new PointF(prediction.X + areaSize / 2, prediction.Y + areaSize / 2)));
-                
+                // image.Mutate(x => x.DrawText(prediction.Class.ToString(), _font, colors[prediction.Class],
+                //   new PointF(prediction.X + areaSize / 2, prediction.Y + areaSize / 2)));
+
                 var yourPolygon = new Rectangle(prediction.X, prediction.Y, areaSize, areaSize);
-               image.Mutate(x => x.Fill(brushes[prediction.Class], yourPolygon));  
+                image.Mutate(x => x.Fill(brushes[prediction.Class], yourPolygon));
             }
         }
 

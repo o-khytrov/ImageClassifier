@@ -1,0 +1,138 @@
+@page "/TrainingDetails"
+@using ChartJs.Blazor.LineChart
+@using ChartJs.Blazor.Common
+@using System.Reflection
+@using Newtonsoft.Json
+@inject Classifier Classifier
+
+<h3>Деталі тренування</h3>
+<div style="height: 500px">
+    <Chart Config="@_configDeltaCriterion"></Chart>
+
+</div>
+@foreach (var config in _criterionRadiusConfigs)
+{
+    <div style="max-height: 500px">
+        <Chart Config="@config"></Chart>
+    </div>
+}
+
+
+@code {
+    private LineConfig? _configDeltaCriterion;
+
+    private List<LineConfig> _criterionRadiusConfigs = new();
+
+    private static async Task<string> ReadTestData()
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        var resourceName = "ImageClassifier.Web.training.json";
+
+        await using var stream = assembly.GetManifestResourceStream(resourceName) ?? throw new Exception("Resource not found");
+        using var reader = new StreamReader(stream);
+        var result = await reader.ReadToEndAsync();
+        return result;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+    //var testDataJson = await ReadTestData();
+    //var testData = JsonConvert.DeserializeObject<List<TrainingEventArgs>>(testDataJson);
+        var testData = Classifier.TrainingHistory;
+        _configDeltaCriterion = GetDeltaCriterionConfig(testData);
+        _criterionRadiusConfigs = GetCriterionRadiusConfig(testData, Classifier.Delta);
+    }
+
+    private static List<LineConfig> GetCriterionRadiusConfig(IEnumerable<TrainingEventArgs> testData, int deltaValue)
+    {
+        var configs = new List<LineConfig>();
+
+        var iteration = testData.First(x => x.Delta == deltaValue);
+        foreach (var classTrainingResult in iteration.Radii)
+        {
+            var configCriterionRadius = new LineConfig
+            {
+                Options = new LineOptions()
+                {
+                    Title = new OptionsTitle()
+                    {
+                        Display = true,
+                        Text =
+                            $"Графік залежності критерію Кульбака від радіусу контейнера класу розпізнавання {iteration.Radii.IndexOf(classTrainingResult)}, одержані при оптимальному значенні параметра delta {deltaValue} "
+                    },
+                    Responsive = true, ShowLines = true
+                }
+            };
+
+            foreach (var radiusData in classTrainingResult)
+            {
+                configCriterionRadius.Data.Labels.Add(radiusData.Radius.ToString());
+            }
+
+            var dataset = new LineDataset<double>(classTrainingResult.Select(x => x.CriterionValue).ToArray())
+            {
+                Label = "КФЕ", BackgroundColor = "blue"
+            };
+            var workingAreaDataset = new LineDataset<double>(classTrainingResult.Select(x =>
+            {
+                if (x.IsWorkingArea)
+                {
+                    return x.CriterionValue;
+                }
+
+                return 0;
+            }).ToArray())
+            {
+                BackgroundColor = "yellow", Label = "Робоча область",
+            };
+
+            configCriterionRadius.Data.Datasets.Add(workingAreaDataset);
+            configCriterionRadius.Data.Datasets.Add(dataset);
+            configs.Add(configCriterionRadius);
+        }
+
+        return configs;
+    }
+
+    private static LineConfig GetDeltaCriterionConfig(List<TrainingEventArgs> testData)
+    {
+        var configDeltaCriterion = new LineConfig
+        {
+            Options = new LineOptions()
+            {
+                Title = new OptionsTitle()
+                {
+                    Display = true,
+                    Text =
+                        "Графік залежності критерію Кульбака від параметра delta , одержаний в процесі машинного навчання системи з паралельною оптимізацією контрольних допусків;"
+                }
+                , Responsive = true, ShowLines = true
+            }
+        };
+        foreach (var iteration in testData)
+        {
+            configDeltaCriterion.Data.Labels.Add(iteration.Delta.ToString());
+        }
+
+        var dataset = new LineDataset<double>(testData.Select(x => x.CriterionValue).ToArray())
+        {
+            Label = "КФЕ"
+        };
+        var workingAreaDataset = new LineDataset<double>(testData.Select(x =>
+        {
+            if (x.IsWorkingArea)
+            {
+                return x.CriterionValue;
+            }
+
+            return 0;
+        }).ToArray())
+        {
+            BackgroundColor = "red", Label = "Робоча область"
+        };
+        configDeltaCriterion.Data.Datasets.Add(dataset);
+        configDeltaCriterion.Data.Datasets.Add(workingAreaDataset);
+        return configDeltaCriterion;
+    }
+
+}
